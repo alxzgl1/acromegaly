@@ -8,9 +8,12 @@ clc;
 aPath = 'd:\\data\\acromegaly\\import';
 aFile = 'Lipids_P'; % 'HILIC_N', 'HILIC_P', 'Lipids_N', 'Lipids_P'
 
+% note: biomarker 'HILIC_P' is detected ('M235T108')
+
 % parameters
 nMaxMissingValuesBySubjects = 0.30;
-nMaxMissingValuesByFeatures = 0.50; % keep above 90% separately as potential biomarker
+nMaxMissingValuesByFeatures = 0.50; 
+nMaxMissingValuesBiomarkers = 0.80; % keep above 80% separately as potential biomarker
 
 % load data and header
 aFilename = [aPath, '\\', aFile, '_data.mat'];
@@ -45,16 +48,16 @@ if length(unique(tLabelsClass)) ~= 2
 end
 
 % process data | exclude missing values by subject and by feature
-% * by subject: exclude subject if 30% of data are missing
-% * by feature: exclude feature if 50% for both groups are missing
-%               keep separately if 90% missing in one of the group
          
 % count missing values by subjects       
 nFeatures = size(data, 1);
 pMissingValuesBySubjects = sum(isnan(data)) / nFeatures;
 pBadSubjects = pMissingValuesBySubjects > nMaxMissingValuesBySubjects;
 
-% exclude bad subjects and labels
+nMaxPatients = sum(pLabelsClass == 1);
+nMaxControls = sum(pLabelsClass == 0);
+
+% exclude bad subjects 
 data = data(:, pBadSubjects == 0);
 tLabelsID = tLabelsID(pBadSubjects == 0);
 tLabelsClass = tLabelsClass(pBadSubjects == 0);
@@ -62,18 +65,40 @@ pLabelsClass = pLabelsClass(pBadSubjects == 0);
 tLabelsSex = tLabelsSex(pBadSubjects == 0);
 tLabelsAge = tLabelsAge(pBadSubjects == 0);
 tLabelsBMI = tLabelsBMI(pBadSubjects == 0);
- 
-% count missing values by features
+
 nPatients = sum(pLabelsClass == 1);
 nControls = sum(pLabelsClass == 0);
+
+% status
+fprintf(1, 'STATUS: %d%% (patients) and %d%% (controls) excluded.\n', round(100 * (1 - nPatients / nMaxPatients)), round(100 * (1 - nControls / nMaxControls)));
+ 
+% count missing values by features
 pMissingValuesByFeatures = [sum(isnan(data(:, pLabelsClass == 1)), 2) / nPatients, ...
                             sum(isnan(data(:, pLabelsClass == 0)), 2) / nControls];
 
 pBadFeatures = pMissingValuesByFeatures(:, 1) > nMaxMissingValuesByFeatures | ...
                pMissingValuesByFeatures(:, 2) > nMaxMissingValuesByFeatures;
-             
 
+% check potential biomarkers
+pBiomarkers = ((pMissingValuesByFeatures(:, 1) < (1 - nMaxMissingValuesBiomarkers)) & (pMissingValuesByFeatures(:, 2) > nMaxMissingValuesBiomarkers)) | ...
+              ((pMissingValuesByFeatures(:, 1) > nMaxMissingValuesBiomarkers) & (pMissingValuesByFeatures(:, 2) < (1 - nMaxMissingValuesBiomarkers)));
+if sum(pBiomarkers) > 0
+  fprintf(1, 'WARNING: possible biomarkers detected.\n');
+  p = find(pBiomarkers > 0);
+  for i = 1:length(p)
+    aFeature = names{p(i)};
+    fprintf(1, '%s | missing values: %d%% (patients) vs %d%% (controls).\n', aFeature, ...
+      round(100 * pMissingValuesByFeatures(p(i), 1)), round(100 * pMissingValuesByFeatures(p(i), 2)));
+  end
+end
 
+% exclude bad features 
+data = data(pBadFeatures == 0, :);
+names = names(pBadFeatures == 0);
+
+% status
+fprintf(1, 'STATUS: %d%% (features) excluded.\n', round(100 * (sum(pBadFeatures == 1) / length(pBadFeatures))));
+ 
 % convert to cells
 nSubjects = size(data, 2);
 nFeatures = size(data, 1);
@@ -93,24 +118,8 @@ end
 tTable = cell2table(tCell, 'VariableNames', ['ID', tLabelsID]);
 
 % write table
-writetable(tTable, [aFile, '.csv']);
-
-% % open figure
-% hFigure = figure; set(hFigure, 'NumberTitle', 'off', 'Position', [0, 0, 1920, 1080] / 2.5, 'MenuBar', 'none', 'Resize', 'off', 'Visible', 'off'); 
-% 
-% % plot
-% subplot(2, 2, [1, 3]); imagesc(x, [-4, 4]); colormap('jet'); box off; xlabel('subjects'); ylabel('metabolomics'); 
-% title('Missing values | acromegaly (cyan) and controls (yellow)', 'FontWeight', 'normal', 'FontSize', 8); set(gca, 'FontSize', 8);
-% subplot(2, 2, 2); bar([y1, y0]); box off; ylim([0, 1]); xlabel('metabolomics'); ylabel('proportion of missing values'); 
-% title('Missing values | acromegaly (blue) and controls (orange)', 'FontWeight', 'normal', 'FontSize', 8); set(gca, 'FontSize', 8);
-% subplot(2, 2, 4); bar(find(labels == 1), u1); hold on; bar(find(labels == 0), u0); box off; ylim([0, 1]); xlabel('subjects'); ylabel('proportion of missing values'); 
-% title('Missing values | acromegaly (blue) and controls (orange)', 'FontWeight', 'normal', 'FontSize', 8); set(gca, 'FontSize', 8);
-% legend({'acromegaly', 'controls'});
-% 
-% % save figure
-% aFilename = [aPath, \\', aFile, '.png'];
-% print(hFigure, aFilename, '-dpng', '-r300');
-% close(hFigure);
+aFilename = sprintf('%s\\%s_MV%d%d.csv', aPath, aFile, round(100 * nMaxMissingValuesBySubjects), round(100 * nMaxMissingValuesByFeatures));
+writetable(tTable, aFilename);
 
 end % end
 
