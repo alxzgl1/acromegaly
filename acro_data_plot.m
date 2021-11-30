@@ -11,6 +11,7 @@ aFile = 'Lipids_P'; % 'HILIC_N', 'HILIC_P', 'Lipids_N', 'Lipids_P'
 % parameters
 nMaxMissingValuesBySubjects = 0.30;
 nMaxMissingValuesByFeatures = 0.50; 
+nMaxMissingValuesBiomarkers = 0.825; % keep above 80% separately as potential biomarker
 
 % load data and header
 aFilename = [aPath, '\\', 'import', '\\', aFile, '_data.mat'];
@@ -70,6 +71,59 @@ pMissingValuesByFeatures = [sum(isnan(data(:, pLabelsClass == 1)), 2) / nPatient
 pBadFeatures = pMissingValuesByFeatures(:, 1) > nMaxMissingValuesByFeatures | ...
                pMissingValuesByFeatures(:, 2) > nMaxMissingValuesByFeatures;
 
+% check potential biomarkers
+bCheckBiomarkers = 1;
+if bCheckBiomarkers == 1
+  pBiomarkers = ((pMissingValuesByFeatures(:, 1) < (1 - nMaxMissingValuesBiomarkers)) & (pMissingValuesByFeatures(:, 2) > nMaxMissingValuesBiomarkers)) | ...
+                ((pMissingValuesByFeatures(:, 1) > nMaxMissingValuesBiomarkers) & (pMissingValuesByFeatures(:, 2) < (1 - nMaxMissingValuesBiomarkers)));
+  if sum(pBiomarkers) > 0
+    fprintf(1, 'WARNING: possible biomarkers detected.\n');
+    p = find(pBiomarkers > 0);
+    for i = 1:length(p)
+      aFeature = names{p(i)};
+      fprintf(1, '%s | missing values: %d%% (patients) vs %d%% (controls).\n', aFeature, ...
+        round(100 * pMissingValuesByFeatures(p(i), 1)), round(100 * pMissingValuesByFeatures(p(i), 2)));
+    end
+  end
+  % handle data
+  xPatients = round(100 * pMissingValuesByFeatures(:, 1));
+  xControls = round(100 * pMissingValuesByFeatures(:, 2));
+  [~, i] = sort(xControls, 'descend');
+  nMetabolites = length(i);
+  xPatients = xPatients(i);
+  xControls = xControls(i);
+  tMetabolites = names(i);
+  pBiomarkers = ((xPatients < 100 * (1 - nMaxMissingValuesBiomarkers)) & (xControls > 100 * nMaxMissingValuesBiomarkers)) | ...
+                ((xPatients > 100 * nMaxMissingValuesBiomarkers) & (xControls < 100 * (1 - nMaxMissingValuesBiomarkers)));
+  if sum(pBiomarkers) > 0
+    p = find(pBiomarkers > 0);
+  else
+    p = [];
+  end
+  % open figure
+	hFigure = figure; set(hFigure, 'NumberTitle', 'off', 'Position', [0, 0, 1920, 1080] / 2.0, 'MenuBar', 'none', 'Resize', 'off', 'Visible', 'off'); 
+  % plot 
+  plot(xPatients, 'o'); hold on; plot(xControls, 'o'); 
+  if ~isempty(p)
+    plot(p, xPatients(p), 'k.');
+    text(p + 50, xPatients(p) + 2, tMetabolites{p});
+  end
+  line([1, nMetabolites], [100 * nMaxMissingValuesBiomarkers, 100 * nMaxMissingValuesBiomarkers], 'Color', 'k', 'LineWidth', 1, 'LineStyle', '-.');
+  line([1, nMetabolites], [100 * (1 - nMaxMissingValuesBiomarkers), 100 * (1 - nMaxMissingValuesBiomarkers)], 'Color', 'k', 'LineWidth', 1, 'LineStyle', '-.');
+  box off; xlabel('metabolites'); ylabel('missing values (%)'); xlim([1, nMetabolites]); ylim([0, 100]);
+  title(aFile, 'FontWeight', 'normal', 'Interpreter', 'none');
+  if ~isempty(p)
+    legend({'acromegaly', 'controls', 'biomarkers'});
+  else
+    legend({'acromegaly', 'controls'});
+  end
+  % save figure
+  aFilename = [aPath, '\\', 'check', '\\', aFile, '_biomarkers.png'];
+  print(hFigure, aFilename, '-dpng', '-r300');
+  close(hFigure);
+  return
+end
+             
 % exclude bad features 
 data = data(pBadFeatures == 0, :);
 
