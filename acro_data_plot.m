@@ -6,7 +6,7 @@ function acro_data_plot()
 clc;
 
 aPath = 'd:\\data\\acromegaly';
-aFile = 'Lipids_P'; % 'HILIC_N', 'HILIC_P', 'Lipids_N', 'Lipids_P'
+aFile = 'HILIC_P'; % 'HILIC_N', 'HILIC_P', 'Lipids_N', 'Lipids_P'
 
 % parameters
 nMaxMissingValuesBySubjects = 0.30;

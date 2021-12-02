@@ -59,6 +59,7 @@ nMaxControls = sum(pLabelsClass == 0);
 
 % exclude bad subjects 
 data = data(:, pBadSubjects == 0);
+labels = labels(:, [0, pBadSubjects] == 0);
 tLabelsID = tLabelsID(pBadSubjects == 0);
 tLabelsClass = tLabelsClass(pBadSubjects == 0);
 pLabelsClass = pLabelsClass(pBadSubjects == 0);
@@ -99,6 +100,18 @@ names = names(pBadFeatures == 0);
 % status
 fprintf(1, 'STATUS: %d%% (features) excluded.\n', round(100 * (sum(pBadFeatures == 1) / length(pBadFeatures))));
  
+% save clean data
+bSaveCleanData = 1;
+if bSaveCleanData == 1
+  aFilename = sprintf('%s\\%s_data_MV%d%d.mat', aPath, aFile, round(100 * nMaxMissingValuesBySubjects), round(100 * nMaxMissingValuesByFeatures));
+  save(aFilename, 'data');
+  aFilename = sprintf('%s\\%s_names_MV%d%d.mat', aPath, aFile, round(100 * nMaxMissingValuesBySubjects), round(100 * nMaxMissingValuesByFeatures));
+  save(aFilename, 'names');
+  aFilename = sprintf('%s\\%s_labels_MV%d%d.mat', aPath, aFile, round(100 * nMaxMissingValuesBySubjects), round(100 * nMaxMissingValuesByFeatures));
+  save(aFilename, 'labels');
+  return
+end
+
 % convert to cells
 nSubjects = size(data, 2);
 nFeatures = size(data, 1);
