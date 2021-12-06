@@ -5,8 +5,8 @@ function acro_data_surrogates()
 
 clc;
 
-aPath = 'd:\\data\\acromegaly\\import';
-aFile = 'HILIC_N'; % 'HILIC_N', 'HILIC_P', 'Lipids_N', 'Lipids_P'
+aPath = 'd:\\data\\acromegaly';
+aFile = 'Lipids_P'; % 'HILIC_N', 'HILIC_P', 'Lipids_N', 'Lipids_P'
 
 % note: biomarker 'HILIC_P' is detected ('M235T108')
 
@@ -15,11 +15,11 @@ nMaxMissingValuesBySubjects = 0.30;
 nMaxMissingValuesByFeatures = 0.50; 
 
 % load data and header
-aFilename = sprintf('%s\\%s_data_MV%d%d.mat', aPath, aFile, round(100 * nMaxMissingValuesBySubjects), round(100 * nMaxMissingValuesByFeatures));
+aFilename = sprintf('%s\\import\\%s_data_MV%d%d.mat', aPath, aFile, round(100 * nMaxMissingValuesBySubjects), round(100 * nMaxMissingValuesByFeatures));
 load(aFilename, 'data');
-aFilename = sprintf('%s\\%s_names_MV%d%d.mat', aPath, aFile, round(100 * nMaxMissingValuesBySubjects), round(100 * nMaxMissingValuesByFeatures));
+aFilename = sprintf('%s\\import\\%s_names_MV%d%d.mat', aPath, aFile, round(100 * nMaxMissingValuesBySubjects), round(100 * nMaxMissingValuesByFeatures));
 load(aFilename, 'names');
-aFilename = sprintf('%s\\%s_labels_MV%d%d.mat', aPath, aFile, round(100 * nMaxMissingValuesBySubjects), round(100 * nMaxMissingValuesByFeatures));
+aFilename = sprintf('%s\\import\\%s_labels_MV%d%d.mat', aPath, aFile, round(100 * nMaxMissingValuesBySubjects), round(100 * nMaxMissingValuesByFeatures));
 load(aFilename, 'labels');
 
 % CHECK
@@ -79,35 +79,77 @@ for iSurrogate = 1:nSurrogates
   PY(:, iSurrogate) = sort(sum(corr(v'), 2)); 
 end
 
-subplot(3, 3, 1); imagesc(x, [-1, 1]); set(gca, 'YDir', 'normal'); colorbar;
-xlabel('subjects'); ylabel('metabolites'); title('A1 | Original data (missing (-1), existing (+1))', 'FontWeight', 'normal');
-subplot(3, 3, 2); imagesc(s, [-1, 1]); set(gca, 'YDir', 'normal'); colorbar;
-xlabel('subjects'); ylabel('metabolites'); title('A2 | Shuffled order of metabolites', 'FontWeight', 'normal');
-subplot(3, 3, 3); imagesc(y, [-1, 1]); set(gca, 'YDir', 'normal'); colorbar;
-xlabel('subjects'); ylabel('metabolites'); title('A3 | Shuffled order of subjects (1 run)', 'FontWeight', 'normal');
-
-subplot(3, 3, 4); imagesc(cx, [-1, 1]); set(gca, 'YDir', 'normal'); colorbar;
-xlabel('metabolites'); ylabel('metabolites'); title('B1 | Correlation matrix of A1', 'FontWeight', 'normal');
-subplot(3, 3, 5); imagesc(cs, [-1, 1]); set(gca, 'YDir', 'normal'); colorbar;
-xlabel('metabolites'); ylabel('metabolites'); title('B2 | Correlation matrix of A2', 'FontWeight', 'normal');
-subplot(3, 3, 6); imagesc(cy, [-1, 1]); set(gca, 'YDir', 'normal'); colorbar;
-xlabel('metabolites'); ylabel('metabolites'); title('B3 | Correlation matrix of A3 (1 run)', 'FontWeight', 'normal');
-
-px = sort(sum(cx, 2));
-ps = sort(sum(cs, 2));
-py = sort(sum(cy, 2));
-
-xMin = min([px(:); ps(:); PY(:)]);
-xMax = max([px(:); ps(:); PY(:)]);
-
-subplot(3, 3, 7); plot(px, 1:nFeatures, 'k.'); xlim([xMin, xMax]);
-xlabel('sorted sum'); ylabel('metabolites'); title('C1 | Sorted sum by columns of Correlation matrix B1', 'FontWeight', 'normal');
-subplot(3, 3, 8); plot(ps, 1:nFeatures, 'k.'); xlim([xMin, xMax]);
-xlabel('sorted sum'); ylabel('metabolites'); title('C2 | Sorted sum by columns of Correlation matrix B2', 'FontWeight', 'normal');
-for iSurrogate = 1:nSurrogates
-  subplot(3, 3, 9); plot(PY(:, iSurrogate), 1:nFeatures, 'k.'); hold on; xlim([xMin, xMax]);
+% layout 3x3
+bLayout3x3 = 0;
+if bLayout3x3 == 1 
+  % open figure
+  hFigure = figure; set(hFigure, 'NumberTitle', 'off', 'Position', [0, 0, 1920, 1080] / 1.5, 'MenuBar', 'none', 'Resize', 'off', 'Visible', 'off'); 
+  % plot
+  subplot(3, 3, 1); imagesc(x, [-1, 1]); set(gca, 'YDir', 'normal'); colorbar;
+  xlabel('subjects'); ylabel('metabolites'); title('A1 | Original data (missing (-1), existing (+1))', 'FontWeight', 'normal');
+  subplot(3, 3, 2); imagesc(s, [-1, 1]); set(gca, 'YDir', 'normal'); colorbar;
+  xlabel('subjects'); ylabel('metabolites'); title('A2 | Shuffled order of metabolites', 'FontWeight', 'normal');
+  subplot(3, 3, 3); imagesc(y, [-1, 1]); set(gca, 'YDir', 'normal'); colorbar;
+  xlabel('subjects'); ylabel('metabolites'); title('A3 | Shuffled order of subjects (1 run)', 'FontWeight', 'normal');
+  % correlation
+  subplot(3, 3, 4); imagesc(cx, [-0.3, 0.3]); set(gca, 'YDir', 'normal'); colorbar;
+  xlabel('metabolites'); ylabel('metabolites'); title('B1 | Correlation matrix of A1', 'FontWeight', 'normal');
+  subplot(3, 3, 5); imagesc(cs, [-0.3, 0.3]); set(gca, 'YDir', 'normal'); colorbar;
+  xlabel('metabolites'); ylabel('metabolites'); title('B2 | Correlation matrix of A2', 'FontWeight', 'normal');
+  subplot(3, 3, 6); imagesc(cy, [-0.3, 0.3]); set(gca, 'YDir', 'normal'); colorbar;
+  xlabel('metabolites'); ylabel('metabolites'); title('B3 | Correlation matrix of A3 (1 run)', 'FontWeight', 'normal');
+  % sorted sum
+  px = sort(sum(cx, 2));
+  ps = sort(sum(cs, 2));
+  xMin = min([px(:); ps(:); PY(:)]);
+  xMax = max([px(:); ps(:); PY(:)]);
+  subplot(3, 3, 7); plot(px, 1:nFeatures, 'k.'); xlim([xMin, xMax]);
+  xlabel('sorted sum'); ylabel('metabolites'); title('C1 | Sorted sum of Correlation matrix B1', 'FontWeight', 'normal');
+  subplot(3, 3, 8); plot(ps, 1:nFeatures, 'k.'); xlim([xMin, xMax]);
+  xlabel('sorted sum'); ylabel('metabolites'); title('C2 | Sorted sum of Correlation matrix B2', 'FontWeight', 'normal');
+  for iSurrogate = 1:nSurrogates
+    subplot(3, 3, 9); plot(PY(:, iSurrogate), 1:nFeatures, 'k.'); hold on; xlim([xMin, xMax]);
+  end
+  xlabel('sorted sum'); ylabel('metabolites'); title('C3 | Sorted sum of Correlation matrix B3 (100 runs)', 'FontWeight', 'normal');
+  % save figure
+  aFile = sprintf('%s_MV%d%d', aFile, round(100 * nMaxMissingValuesBySubjects), round(100 * nMaxMissingValuesByFeatures));
+  aFilename = [aPath, '\\', 'surrogates', '\\', aFile, '.png'];
+  print(hFigure, aFilename, '-dpng', '-r300');
+  close(hFigure);
 end
-xlabel('sorted sum'); ylabel('metabolites'); title('C3 | Sorted sum by columns of Correlation matrix B3 (100 runs)', 'FontWeight', 'normal');
+
+% layout 2x3
+bLayout2x3 = 1;
+if bLayout2x3 == 1 
+  % open figure
+  hFigure = figure; set(hFigure, 'NumberTitle', 'off', 'Position', [0, 0, 1920, 1080] / 1.5, 'MenuBar', 'none', 'Resize', 'off', 'Visible', 'off'); 
+  % plot
+  subplot(2, 3, 1); imagesc(x, [-1, 1]); set(gca, 'YDir', 'normal'); colorbar;
+  xlabel('subjects'); ylabel('metabolites'); title('A1 | Original data (missing/existing)', 'FontWeight', 'normal');
+  subplot(2, 3, 4); imagesc(y, [-1, 1]); set(gca, 'YDir', 'normal'); colorbar;
+  xlabel('subjects'); ylabel('metabolites'); title('A3 | Shuffled order of subjects (1 run)', 'FontWeight', 'normal');
+  % correlation
+  subplot(2, 3, 2); imagesc(cx, [-0.2, 0.2]); set(gca, 'YDir', 'normal'); colorbar;
+  xlabel('metabolites'); ylabel('metabolites'); title('B1 | Correlation matrix of A1', 'FontWeight', 'normal');
+  subplot(2, 3, 5); imagesc(cy, [-0.2, 0.2]); set(gca, 'YDir', 'normal'); colorbar;
+  xlabel('metabolites'); ylabel('metabolites'); title('B3 | Correlation matrix of A3 (1 run)', 'FontWeight', 'normal');
+  % sorted sum
+  px = sort(sum(cx, 2));
+  ps = sort(sum(cs, 2));
+  xMin = min([px(:); ps(:); PY(:)]);
+  xMax = max([px(:); ps(:); PY(:)]);
+  subplot(2, 3, 3); plot(px, 1:nFeatures, 'k.'); xlim([xMin, xMax]);
+  xlabel('sorted sum'); ylabel('metabolites'); title('C1 | Sorted sum of Correlation matrix B1', 'FontWeight', 'normal');
+  for iSurrogate = 1:nSurrogates
+    subplot(2, 3, 6); plot(PY(:, iSurrogate), 1:nFeatures, 'k.'); hold on; xlim([xMin, xMax]);
+  end
+  xlabel('sorted sum'); ylabel('metabolites'); title('C3 | Sorted sum of Correlation matrix B3 (100 runs)', 'FontWeight', 'normal');
+  % save figure
+  aFile = sprintf('%s_MV%d%d', aFile, round(100 * nMaxMissingValuesBySubjects), round(100 * nMaxMissingValuesByFeatures));
+  aFilename = [aPath, '\\', 'surrogates', '\\', aFile, '.png'];
+  print(hFigure, aFilename, '-dpng', '-r300');
+  close(hFigure);
+end
 
 end % end
 
