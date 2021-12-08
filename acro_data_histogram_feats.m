@@ -1,9 +1,9 @@
 %-------------------------------------------------------------------------------
-% Function 
+% Function
 %-------------------------------------------------------------------------------
-function acro_data_histogram_MV()
+function acro_data_histogram_feats()
 
-% histogram of missing values
+% histogram of features
 
 clc;
 
@@ -16,7 +16,7 @@ nMaxMissingValuesBySubjects = 0.30;
 nMaxMissingValuesByFeatures = 0.50; 
 
 % open figure
-hFigure = figure; set(hFigure, 'NumberTitle', 'off', 'Position', [0, 0, 1920, 1080] / 2.0, 'MenuBar', 'none', 'Resize', 'off', 'Visible', 'off'); 
+hFigure = figure; set(hFigure, 'NumberTitle', 'off', 'Position', [0, 0, 1920, 1080] / 1.75, 'MenuBar', 'none', 'Resize', 'off', 'Visible', 'off'); 
 
 % loop
 for iRAW = 1:2
@@ -62,46 +62,49 @@ for iRAW = 1:2
     return
   end
 
-  % missing values to +/-1
-  x = isnan(data);
-
-  xPatients = mean(x(:, pLabelsClass == 1), 2);
-  xControls = mean(x(:, pLabelsClass == 0), 2);
-
-  uPatients = unique(xPatients);
-  uControls = unique(xControls);
-
-  p = zeros(length(uPatients), length(uControls));
-  for i = 1:length(uPatients)
-    for j = 1:length(uControls)
-      p(i, j) = sum(xPatients == uPatients(i) & xControls == uControls(j));
-    end 
+  % nan mean
+  x = data;
+  xPatients = nanmean(x(:, pLabelsClass == 1), 2);
+  xControls = nanmean(x(:, pLabelsClass == 0), 2);
+  bLOG10 = 1;
+  if bLOG10 == 1
+    xPatients = log10(xPatients);
+    xControls = log10(xControls);
   end
+  p_val = ranksum(xPatients, xControls);
 
-  b = 0:(1.001 * mean(diff(uPatients))):1;
+  xMin = min([xPatients(:); xControls(:)]);
+  xMax = max([xPatients(:); xControls(:)]);
+
+  nBins = 150;
+  b = xMin:((xMax - xMin) / nBins):xMax;
   hPatients = histc(xPatients, b);
   hControls = histc(xControls, b);
-
+  
+  [~, i] = sort(xControls); 
+  yPatients = xPatients(i);
+  yControls = xControls(i);
+  
   % plot
-  subplot(2, 2, 1 + (iRAW - 1) * 2); imagesc(uPatients, uControls, log10(p)); colorbar; 
-  xlabel('Metabolites (controls)'); ylabel('Metabolites (patients)'); set(gca, 'YDir', 'normal')
+  subplot(2, 2, 1 + (iRAW - 1) * 2); plot(b, log10([hPatients, hControls]), 'x'); box off; legend({'Patients', 'Controls'});
+  xlabel('log10(peak_intensities_of_metabolites)', 'Interpreter', 'none'); ylabel('log10(counts)'); 
   if bRAW == 1
-    title('Fraction of missing values (original)', 'FontWeight', 'normal');
+    title(sprintf('Peak intensities (original) | p=%1.3f', p_val), 'FontWeight', 'normal');
   else
-    title('Fraction of missing values (with exclusion)', 'FontWeight', 'normal');
+    title(sprintf('Peak intensities (with exclusion) | p=%1.3f', p_val), 'FontWeight', 'normal');
   end
   
-  subplot(2, 2, 2 + (iRAW - 1) * 2); bar(b, [hPatients, hControls]); box off; legend({'Patients', 'Controls'});
-  xlabel('Fraction of missing values'); ylabel('metabolites');
+  subplot(2, 2, 2 + (iRAW - 1) * 2); plot(yPatients, '-*'); hold on; plot(yControls, 'LineWidth', 2); box off;
+  xlabel('Metabolites'); ylabel('log10(peak_intensities)', 'Interpreter', 'none'); xlim([1, length(yPatients)]);
   if bRAW == 1
-    title('Fraction of missing values (original)', 'FontWeight', 'normal');
+    title('Sorted peak intensities (original)', 'FontWeight', 'normal');
   else
-    title('Fraction of missing values (with exclusion)', 'FontWeight', 'normal');
+    title('Sorted peak intensities (with exclusion)', 'FontWeight', 'normal');
   end
 end
 
 % save figure
-aFilename = [aPath, '\\', 'histogram', '\\', 'missing_values', '\\', aFile, '_histogram.png'];
+aFilename = [aPath, '\\', 'histogram', '\\', 'features', '\\', aFile, '_histogram.png'];
 print(hFigure, aFilename, '-dpng', '-r300');
 close(hFigure);
 
