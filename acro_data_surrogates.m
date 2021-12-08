@@ -113,7 +113,7 @@ if bLayout3x3 == 1
   xlabel('sorted sum'); ylabel('metabolites'); title('C3 | Sorted sum of Correlation matrix B3 (100 runs)', 'FontWeight', 'normal');
   % save figure
   aFile = sprintf('%s_MV%d%d', aFile, round(100 * nMaxMissingValuesBySubjects), round(100 * nMaxMissingValuesByFeatures));
-  aFilename = [aPath, '\\', 'surrogates', '\\', aFile, '.png'];
+  aFilename = [aPath, '\\', '_analysis', '\\', 'surrogates', '\\', aFile, '.png'];
   print(hFigure, aFilename, '-dpng', '-r300');
   close(hFigure);
 end
@@ -146,7 +146,7 @@ if bLayout2x3 == 1
   xlabel('sorted sum'); ylabel('metabolites'); title('C3 | Sorted sum of Correlation matrix B3 (100 runs)', 'FontWeight', 'normal');
   % save figure
   aFile = sprintf('%s_MV%d%d', aFile, round(100 * nMaxMissingValuesBySubjects), round(100 * nMaxMissingValuesByFeatures));
-  aFilename = [aPath, '\\', 'surrogates', '\\', aFile, '.png'];
+  aFilename = [aPath, '\\', '_analysis', '\\', 'surrogates', '\\', aFile, '.png'];
   print(hFigure, aFilename, '-dpng', '-r300');
   close(hFigure);
 end

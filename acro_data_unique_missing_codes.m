@@ -1,7 +1,7 @@
 %-------------------------------------------------------------------------------
 % Function 
 %-------------------------------------------------------------------------------
-function acro_data_histogram_MV()
+function acro_data_unique_missing_codes()
 
 % histogram of missing values
 
@@ -63,45 +63,61 @@ for iRAW = 1:2
   end
 
   % missing values to +/-1
-  x = isnan(data);
-
-  xPatients = mean(x(:, pLabelsClass == 1), 2);
-  xControls = mean(x(:, pLabelsClass == 0), 2);
-
-  uPatients = unique(xPatients);
-  uControls = unique(xControls);
-
-  p = zeros(length(uPatients), length(uControls));
-  for i = 1:length(uPatients)
-    for j = 1:length(uControls)
-      p(i, j) = sum(xPatients == uPatients(i) & xControls == uControls(j));
-    end 
+  x = double(isnan(data));
+  
+  nFeatures = size(x, 1);
+  nSubjects = size(x, 2);
+  pCodes = zeros(nFeatures, 1);
+  tCodes = cell(nFeatures, 1);
+  W = 2 .^ (0:(nSubjects - 1));
+  for iFeature = 1:nFeatures
+    pCodes(iFeature) = sum(x(iFeature, :) .* W);
+    tCodes{iFeature} = strrep(num2str(x(iFeature, :)), ' ', '');
   end
 
-  b = 0:(1.001 * mean(diff(uPatients))):1;
-  hPatients = histc(xPatients, b);
-  hControls = histc(xControls, b);
-
-  % plot
-  subplot(2, 2, 1 + (iRAW - 1) * 2); imagesc(uPatients, uControls, log10(p)); colorbar; 
-  xlabel('Metabolites (controls)'); ylabel('Metabolites (patients)'); set(gca, 'YDir', 'normal')
-  if bRAW == 1
-    title('Fraction of missing values (original)', 'FontWeight', 'normal');
-  else
-    title('Fraction of missing values (with exclusion)', 'FontWeight', 'normal');
+  pUniqueCodes = unique(pCodes);
+  tUniqueCodes = unique(tCodes);
+  if pUniqueCodes(1) == 0
+    pUniqueCodes(1) = [];
+    tUniqueCodes(1) = [];
+  end
+  nUniqueCodes = length(pUniqueCodes);
+  pCodesCounts = zeros(nUniqueCodes, 1);
+  for i = 1:nUniqueCodes
+    pCodesCounts(i) = sum(pCodes == pUniqueCodes(i));
   end
   
-  subplot(2, 2, 2 + (iRAW - 1) * 2); bar(b, [hPatients, hControls]); box off; legend({'Patients', 'Controls'});
-  xlabel('Fraction of missing values'); ylabel('metabolites');
-  if bRAW == 1
-    title('Fraction of missing values (original)', 'FontWeight', 'normal');
-  else
-    title('Fraction of missing values (with exclusion)', 'FontWeight', 'normal');
+  nMinRecurrence = 5;
+  pUniqueCodesRepeated = pUniqueCodes(pCodesCounts > nMinRecurrence);
+  tUniqueCodesRepeated = tUniqueCodes(pCodesCounts > nMinRecurrence);
+  pUniqueCodesRepeatedCounts = pCodesCounts(pCodesCounts > nMinRecurrence);
+  
+  [~, i] = sort(pUniqueCodesRepeatedCounts);
+  pUniqueCodesRepeated = pUniqueCodesRepeated(i);
+  tUniqueCodesRepeated = tUniqueCodesRepeated(i);
+  pUniqueCodesRepeatedCounts = pUniqueCodesRepeatedCounts(i);
+  
+  nUniqueFeatures = length(pUniqueCodesRepeatedCounts);
+  X = zeros(nUniqueFeatures, nSubjects);
+  for iFeature = 1:nUniqueFeatures
+    for i = 1:nSubjects
+      X(iFeature, i) = str2double(tUniqueCodesRepeated{iFeature}(i));
+    end
   end
+  
+  % log10
+  pUniqueCodesRepeatedCounts = log10(pUniqueCodesRepeatedCounts);
+  
+  % plot
+  subplot(2, 4, [1, 3] + (iRAW - 1) * 4); imagesc(X, [-2, 2]); colormap('jet'); box off; colorbar;
+  xlabel('Subjects'); ylabel('Unique patterns');
+  subplot(2, 4, 4 + (iRAW - 1) * 4); imagesc(pUniqueCodesRepeatedCounts, [0, max(pUniqueCodesRepeatedCounts)]); hcb = colorbar;
+  hcb.Label.String = 'log10(recurrence)';
+  ylabel('Unique patterns');
 end
 
 % save figure
-aFilename = [aPath, '\\', '_analysis', '\\', 'histogram', '\\', 'missing_values', '\\', aFile, '_histogram.png'];
+aFilename = [aPath, '\\', '_analysis', '\\', 'unique_codes', '\\', aFile, '_codes.png'];
 print(hFigure, aFilename, '-dpng', '-r300');
 close(hFigure);
 

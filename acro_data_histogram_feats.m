@@ -104,7 +104,7 @@ for iRAW = 1:2
 end
 
 % save figure
-aFilename = [aPath, '\\', 'histogram', '\\', 'features', '\\', aFile, '_histogram.png'];
+aFilename = [aPath, '\\', '_analysis', '\\', 'histogram', '\\', 'features', '\\', aFile, '_histogram.png'];
 print(hFigure, aFilename, '-dpng', '-r300');
 close(hFigure);
 
