@@ -3,9 +3,11 @@
 %-------------------------------------------------------------------------------
 function acro_data_unique_missing_codes()
 
-% histogram of missing values
-
 clc;
+
+nMinCodeRecurrence = 5; % 5 (default)
+
+bShuffle = 0; % 0 (default), if 1, run again until NO error, and try reducing nMinCodeRecurrence
 
 aPath = 'd:\\data\\acromegaly';
 aFile = 'Lipids_P'; % 'HILIC_N', 'HILIC_P', 'Lipids_N', 'Lipids_P'
@@ -20,7 +22,7 @@ hFigure = figure; set(hFigure, 'NumberTitle', 'off', 'Position', [0, 0, 1920, 10
 
 % loop
 for iRAW = 1:2
-  bRAW = 2 - iRAW;
+  bRAW = 2 - iRAW; if bShuffle == 1, bRAW = 0; end
   % load data
   if bRAW == 1
     aFilename = sprintf('%s\\import\\%s_data.mat', aPath, aFile);
@@ -62,38 +64,42 @@ for iRAW = 1:2
     return
   end
 
-  % missing values to +/-1
-  x = double(isnan(data));
+  % missing values
+  x = double(~isnan(data));
+
+  % shuffle
+  nFeatures = size(x, 1);
+  nSubjects = size(x, 2);
+  if bShuffle == 1
+    if iRAW == 2
+      for i = 1:nSubjects
+        x(:, i) = x(randperm(nFeatures), i);
+      end
+    end
+  end
   
   nFeatures = size(x, 1);
   nSubjects = size(x, 2);
-  pCodes = zeros(nFeatures, 1);
   tCodes = cell(nFeatures, 1);
-  W = 2 .^ (0:(nSubjects - 1));
   for iFeature = 1:nFeatures
-    pCodes(iFeature) = sum(x(iFeature, :) .* W);
     tCodes{iFeature} = strrep(num2str(x(iFeature, :)), ' ', '');
   end
 
-  pUniqueCodes = unique(pCodes);
+  % unique codes
   tUniqueCodes = unique(tCodes);
-  if pUniqueCodes(1) == 0
-    pUniqueCodes(1) = [];
-    tUniqueCodes(1) = [];
+  if sum(double(tUniqueCodes{end}) / double('1')) == nSubjects
+    tUniqueCodes(end) = [];
   end
-  nUniqueCodes = length(pUniqueCodes);
+  nUniqueCodes = length(tUniqueCodes);
   pCodesCounts = zeros(nUniqueCodes, 1);
   for i = 1:nUniqueCodes
-    pCodesCounts(i) = sum(pCodes == pUniqueCodes(i));
+    pCodesCounts(i) = sum(strcmp(tCodes, tUniqueCodes{i}));
   end
   
-  nMinRecurrence = 5;
-  pUniqueCodesRepeated = pUniqueCodes(pCodesCounts > nMinRecurrence);
-  tUniqueCodesRepeated = tUniqueCodes(pCodesCounts > nMinRecurrence);
-  pUniqueCodesRepeatedCounts = pCodesCounts(pCodesCounts > nMinRecurrence);
+  tUniqueCodesRepeated = tUniqueCodes(pCodesCounts > nMinCodeRecurrence);
+  pUniqueCodesRepeatedCounts = pCodesCounts(pCodesCounts > nMinCodeRecurrence);
   
   [~, i] = sort(pUniqueCodesRepeatedCounts);
-  pUniqueCodesRepeated = pUniqueCodesRepeated(i);
   tUniqueCodesRepeated = tUniqueCodesRepeated(i);
   pUniqueCodesRepeatedCounts = pUniqueCodesRepeatedCounts(i);
   
@@ -106,18 +112,54 @@ for iRAW = 1:2
   end
   
   % log10
-  pUniqueCodesRepeatedCounts = log10(pUniqueCodesRepeatedCounts);
+  bLOG10 = 0;
+  if bLOG10 == 1
+    pUniqueCodesRepeatedCounts = log10(pUniqueCodesRepeatedCounts);
+  end
   
   % plot
-  subplot(2, 4, [1, 3] + (iRAW - 1) * 4); imagesc(X, [-2, 2]); colormap('jet'); box off; colorbar;
-  xlabel('Subjects'); ylabel('Unique patterns');
-  subplot(2, 4, 4 + (iRAW - 1) * 4); imagesc(pUniqueCodesRepeatedCounts, [0, max(pUniqueCodesRepeatedCounts)]); hcb = colorbar;
-  hcb.Label.String = 'log10(recurrence)';
-  ylabel('Unique patterns');
+  subplot(2, 4, [1, 3] + (iRAW - 1) * 4); imagesc(X, [0, 1]); box off; colorbar; 
+  xlabel('Subjects'); ylabel('Unique patterns (missing=blue)'); set(gca, 'YDir', 'normal');
+  if bShuffle == 1
+    if iRAW == 1
+      title('Codes after exclusion', 'FontWeight', 'normal');
+    else
+      title('Codes after exclusion shuffled', 'FontWeight', 'normal');
+    end
+  else
+    if bRAW == 1
+      title('Codes before exclusion', 'FontWeight', 'normal');
+    else
+      title('Codes after exclusion', 'FontWeight', 'normal');
+    end
+  end
+  % add grid
+  rows = size(X, 1) + 2;
+  columns = size(X, 2) + 2;
+  for row = 1:rows
+    line([0, columns + 1], [row - 0.5, row - 0.5], 'Color', 'k', 'LineWidth', 0.5);
+  end
+  for col = 1:columns
+    line([col - 0.5, col - 0.5], [0, rows + 1], 'Color', 'k', 'LineWidth', 0.5);
+  end
+  % bar
+  subplot(2, 4, 4 + (iRAW - 1) * 4); barh(1:length(pUniqueCodesRepeatedCounts), pUniqueCodesRepeatedCounts); 
+  ylim([0.5, length(pUniqueCodesRepeatedCounts) + 0.5]); box off;
+  ylabel('Unique patterns'); 
+  title(sprintf('Min recurrence is %d', nMinCodeRecurrence), 'FontWeight', 'normal');
+  if bLOG10 == 1
+    xlabel('log10(recurrence)'); 
+  else
+    xlabel('Recurrence counts'); 
+  end
 end
 
 % save figure
-aFilename = [aPath, '\\', '_analysis', '\\', 'unique_codes', '\\', aFile, '_codes.png'];
+if bShuffle == 1
+  aFilename = [aPath, '\\', '_analysis', '\\', 'unique_codes', '\\', 'shuffled', '\\', aFile, '_codes_shuffled.png'];
+else
+  aFilename = [aPath, '\\', '_analysis', '\\', 'unique_codes', '\\', aFile, '_codes.png'];
+end
 print(hFigure, aFilename, '-dpng', '-r300');
 close(hFigure);
 
