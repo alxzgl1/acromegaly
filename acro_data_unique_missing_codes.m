@@ -87,8 +87,9 @@ for iRAW = 1:2
 
   % unique codes
   tUniqueCodes = unique(tCodes);
-  if sum(double(tUniqueCodes{end}) / double('1')) == nSubjects
-    tUniqueCodes(end) = [];
+  bFeaturesFull = 0;
+  if sum(double(tUniqueCodes{end}) / double('1')) == nSubjects % non-missing
+    bFeaturesFull = 1; % tUniqueCodes(end) = [];
   end
   nUniqueCodes = length(tUniqueCodes);
   pCodesCounts = zeros(nUniqueCodes, 1);
@@ -102,6 +103,19 @@ for iRAW = 1:2
   [~, i] = sort(pUniqueCodesRepeatedCounts);
   tUniqueCodesRepeated = tUniqueCodesRepeated(i);
   pUniqueCodesRepeatedCounts = pUniqueCodesRepeatedCounts(i);
+
+  % exclude non-missing values
+  if bFeaturesFull == 1
+    nFeaturesFull = round(100 * (pUniqueCodesRepeatedCounts(end) / nFeatures));
+    tUniqueCodesRepeated(end) = [];
+    pUniqueCodesRepeatedCounts(end) = [];
+    nFeaturesAboveMin = round(100 * (sum(pUniqueCodesRepeatedCounts) / nFeatures));
+    nFeaturesBelowMin = 100 - nFeaturesFull - nFeaturesAboveMin;
+  else
+    nFeaturesFull = 0;
+    nFeaturesAboveMin = round(100 * (sum(pUniqueCodesRepeatedCounts) / nFeatures));
+    nFeaturesBelowMin = 100 - nFeaturesFull - nFeaturesAboveMin;
+  end
   
   nUniqueFeatures = length(pUniqueCodesRepeatedCounts);
   X = zeros(nUniqueFeatures, nSubjects);
@@ -122,15 +136,15 @@ for iRAW = 1:2
   xlabel('Subjects'); ylabel('Unique patterns (missing=blue)'); set(gca, 'YDir', 'normal');
   if bShuffle == 1
     if iRAW == 1
-      title('Codes after exclusion', 'FontWeight', 'normal');
+      title(sprintf('Codes after exclusion | nonmissing=%d%%, above min=%d%%, below min=%d%%', nFeaturesFull, nFeaturesAboveMin, nFeaturesBelowMin), 'FontWeight', 'normal');
     else
-      title('Codes after exclusion shuffled', 'FontWeight', 'normal');
+      title(sprintf('Codes after exclusion shuffled | nonmissing=%d%%, above min=%d%%, below min=%d%%', nFeaturesFull, nFeaturesAboveMin, nFeaturesBelowMin), 'FontWeight', 'normal');
     end
   else
     if bRAW == 1
-      title('Codes before exclusion', 'FontWeight', 'normal');
+      title(sprintf('Codes before exclusion | nonmissing=%d%%, above min=%d%%, below min=%d%%', nFeaturesFull, nFeaturesAboveMin, nFeaturesBelowMin), 'FontWeight', 'normal');
     else
-      title('Codes after exclusion', 'FontWeight', 'normal');
+      title(sprintf('Codes after exclusion | nonmissing=%d%%, above min=%d%%, below min=%d%%', nFeaturesFull, nFeaturesAboveMin, nFeaturesBelowMin), 'FontWeight', 'normal');
     end
   end
   % add grid
