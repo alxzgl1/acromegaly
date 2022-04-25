@@ -1,0 +1,160 @@
+{
+    "GMLVQ.AverageRun": {
+        "inputs": [
+            { "name": "gmlvq", "kind": "required", "type": "GMLVQ.GMLVQ" },
+            { "name": "trainingData", "kind": "required", "type": "GMLVQ.DataPair" }
+        ]
+    },
+
+    "GMLVQ.AverageRun.setMeanPerformanceTraining": {
+        "inputs": [
+            { "name": "this", "kind": "required", "type": "GMLVQ.AverageRun" },
+            { "name": "results", "kind": "required", "type": "GMLVQ.Result" }
+        ]
+    },
+
+    "GMLVQ.AverageRun.setMeanPerformanceValidation": {
+        "inputs": [
+            { "name": "this", "kind": "required", "type": "GMLVQ.AverageRun" },
+            { "name": "results", "kind": "required", "type": "GMLVQ.Result" }
+        ]
+    },
+
+    "GMLVQ.DataPair": {
+        "inputs": [
+            { "name": "featureVectors", "kind": "required", "type": "numeric" },
+            { "name": "labels", "kind": "required", "type": ["integer", "vector"] }
+        ]
+    },
+
+    "GMLVQ.GMLVQ": {
+        "inputs": [
+            { "name": "featureVectors", "kind": "required", "type": "numeric" },
+            { "name": "labels", "kind": "required", "type": ["integer", "vector"] },
+            { "name": "parameters", "kind": "ordered", "type": ["GMLVQ.Parameters", "scalar"], "default": "GMLVQ.Parameters();" },
+            { "name": "totalsteps", "kind": "ordered", "type": ["integer", "scalar"], "default": "10" },
+            { "name": "prototypeLabels", "kind": "ordered", "type": ["integer", "vector"] }
+        ]
+    },
+
+    "GMLVQ.GMLVQ.runL1O": {
+        "inputs": [
+            { "name": "this", "kind": "required", "type": ["GMLVQ.GMLVQ", "scalar"] }
+        ]
+    },
+
+    "GMLVQ.GMLVQ.runSingle": {
+        "inputs": [
+            { "name": "this", "kind": "required", "type": ["GMLVQ.GMLVQ", "scalar"] }
+        ]
+    },
+
+    "GMLVQ.GMLVQ.runValidation": {
+        "inputs": [
+            { "name": "this", "kind": "required", "type": ["GMLVQ.GMLVQ", "scalar"] },
+            { "name": "nRuns", "kind": "ordered", "type": ["integer", "scalar"], "default": "5" },
+            { "name": "percentage", "kind": "ordered", "type": "scalar", "default": "10" }
+        ]
+    },
+
+    "GMLVQ.L1OResultSet.plot": {
+        "inputs": [
+            { "name": "this", "kind": "required", "type": "GMLVQ.L1OResultSet" }
+        ]
+    },
+    
+    "GMLVQ.Parameters": {
+        "inputs": [
+            { "name": "randomization", "kind": "namevalue", "type": ["numeric", "scalar"] },
+            { "name": "doztr", "kind": "namevalue", "type": ["logical", "scalar"] },
+            { "name": "mode", "kind": "namevalue", "type": ["GMLVQ.Mode", "scalar"] },
+            { "name": "rndinit", "kind": "namevalue", "type": ["logical", "scalar"] },
+            { "name": "mu", "kind": "namevalue", "type": ["numeric", "scalar"] },
+            { "name": "decfac", "kind": "namevalue", "type": ["numeric", "scalar"] },
+            { "name": "incfac", "kind": "namevalue", "type": ["numeric", "scalar"] },
+            { "name": "ncop", "kind": "namevalue", "type": ["numeric", "scalar", ">=0"] },
+            { "name": "etam", "kind": "namevalue", "type": ["numeric", "scalar"] },
+            { "name": "etap", "kind": "namevalue", "type": ["numeric", "scalar"] },
+            { "name": "rngseed", "kind": "namevalue", "type": ["numeric", "scalar"] },
+            { "name": "showlegend", "kind": "namevalue", "type": ["logical", "scalar"] },
+            { "name": "rocClass", "kind": "namevalue", "type": ["numeric", "scalar"] }
+        ]
+    },
+
+    "GMLVQ.Performance": {
+        "inputs": [
+            { "name": "nClasses", "kind": "required", "type": ["numeric", "scalar", ">=0"] }
+        ]
+    },
+
+    "GMLVQ.Run": {
+        "inputs": [
+            { "name": "gmlvq", "kind": "required", "type": ["GMLVQ.GMLVQ", "scalar"]},
+            { "name": "trainingData", "kind": "required", "type": ["GMLVQ.DataPair", "scalar"] },
+            { "name": "validationData", "kind": "required", "type": ["GMLVQ.DataPair", "scalar"] }
+        ]
+    },
+
+    "GMLVQ.Run.calculatePerformance": {
+        "inputs": [
+            { "name": "this", "kind": "required", "type": ["GMLVQ.Run", "scalar"] },
+            { "name": "dataPair", "kind": "required", "type": ["GMLVQ.DataPair", "scalar"] },
+            { "name": "prototypes", "kind": "required", "type": ["numeric"] },
+            { "name": "omegaMatrix", "kind": "required", "type": ["numeric"] },
+            { "name": "customMu", "kind": "ordered", "type": ["numeric", "scalar"] }
+        ]
+    },      
+
+    "GMLVQ.Run.classify": {
+        "inputs": [
+            { "name": "this", "kind": "required", "type": ["GMLVQ.Run", "scalar"] },
+            { "name": "dataPair", "kind": "required", "type": ["GMLVQ.DataPair", "scalar"] }
+        ]
+    },
+
+    "GMLVQ.Run.cost": {
+        "inputs": [
+            { "name": "this", "kind": "required", "type": ["GMLVQ.Run", "scalar"] },
+            { "name": "dataPair", "kind": "required", "type": ["GMLVQ.DataPair", "scalar"] },
+            { "name": "prototypes", "kind": "required", "type": "numeric" },
+            { "name": "omegaMatrix", "kind": "required", "type": "numeric" },
+            { "name": "customMu", "kind": "ordered", "type": ["numeric", "scalar"] }
+        ]
+    },
+
+    "GMLVQ.Run.doBatchStep": {
+        "inputs": [
+            { "name": "this", "kind": "required", "type": ["GMLVQ.Run", "scalar"] },
+            { "name": "prototypes", "kind": "required", "type": "numeric" },
+            { "name": "omegaMatrix", "kind": "required", "type": "numeric" }
+        ]
+    },
+
+    "GMLVQ.Run.execute": {
+        "inputs": [
+            { "name": "this", "kind": "required", "type": ["GMLVQ.Run", "scalar"] }
+        ]
+    },
+
+    "GMLVQ.Run.plotconf": {
+        "inputs": [
+            { "name": "this", "kind": "required", "type": ["GMLVQ.Run"] },
+            { "name": "type", "kind": "ordered", "type": ["choices:{'training','validation'}"] },
+            { "name": "stepID", "kind": "ordered", "type": ["integer"] },
+            { "name": "suffix", "kind": "ordered", "type": ["logical"] }
+        ]
+    },
+
+    "GMLVQ.Run.setInitialPrototypes": {
+        "inputs": [
+            { "name": "this", "kind": "required", "type": ["GMLVQ.Run", "scalar"] }
+        ]
+    },
+    
+    "GMLVQ.Run.zScore": {
+        "inputs": [
+            { "name": "this", "kind": "required", "type": ["GMLVQ.Run", "scalar"] },
+            { "name": "dataPair", "kind": "required", "type": ["GMLVQ.DataPair", "scalar"] }
+        ]
+    }
+}
