@@ -134,11 +134,12 @@ line([1, nSubjects], [0, 0], 'Color', [0.7, 0.7, 0.7], 'LineWidth', 2); hold on;
 plot(x, 'o-'); hold on; 
 box off; xlim([1, size(X, 2)]); ylim([yMin, yMax]);
 xlabel('patients / controls'); ylabel('w^T * X');
-accuracy = mean((x(:) < 0) == y_TR(:));
-title(sprintf('accuracy = %1.2f', accuracy), 'FontWeight', 'normal');
+accuracy_n = mean((x(:) < 0) == y_TR(:));
+accuracy_p = mean((x(:) > 0) == y_TR(:));
+title(sprintf('accuracy = %1.2f', max(accuracy_n, accuracy_p)), 'FontWeight', 'normal');
 
 % projections
-subplot(2, 2, 4);
+subplot(2, 2, [3, 4]);
 l = result.averageRun.lambda;
 [lV, lD] = eig(l);
 w = lV(:, end); % leading eigenvector of lambda
@@ -147,7 +148,6 @@ x = abs(V * S(1:K, 1:K) * w); % abs(V * w)
 x = x(ix);
 plot(x, '.'); hold on; box off; xlim([0, length(V)]);
 xlabel('metabolites'); ylabel('V * w');
-
 
 % plot | GMLVQ default
 % plot(result);
