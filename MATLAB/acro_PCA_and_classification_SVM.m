@@ -24,8 +24,6 @@ bNumberOfImportantMetabolites = 0;
 
 bRemoveImportantMetabolites = 0;
 
-bKMeans = 0;
-
 nPercentageOfSamples = 1.0; % 1.0 (default), nPercentageOfSamples *  min(patients), nPercentageOfSamples * controls
 nEqualiseSamples = 1;
 
@@ -74,12 +72,6 @@ if bRemoveImportantMetabolites > 0
   Y = Y(pMetaboliteIndices, :);
 end
 
-% k-means
-if bKMeans == 1
-  [~, C] = kmeans(Y, 50);
-  Y = C;
-end
-
 % models
 if bKeepImportantMetabolites == 1
   nModels = 1;
@@ -105,7 +97,7 @@ end
 % x = V' * Y;
 
 % PCA
-if bKeepImportantMetabolites == 0 && bKMeans == 0
+if bKeepImportantMetabolites == 0 
   % svd
   [~, S, V] = svd(cov(Y')); 
   d = diag(S);

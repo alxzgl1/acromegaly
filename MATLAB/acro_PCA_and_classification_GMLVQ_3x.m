@@ -104,33 +104,53 @@ result = GMLVQ_model.runValidation(10, 25); % 10 validation runs, 25% of example
 lambda = result.averageRun.lambda;
 prototypes = result.averageRun.prototypes;
 
-% ROC
-bROC = 1;
-if bROC == 1
-  f2 = figure(2); 
-  f2.Name = 'ROC-AUC';
-  plot(result.averageRun.validationPerf(end).fpr', result.averageRun.validationPerf(end).tpr', ...
-    'b-', 'LineWidth', 2);
-  hold on;
-  plot(mean(result.finalFprs(:, result.finalThresholds(end, :) == 0.5)), ...
-    mean(result.finalTprs(:, result.finalThresholds(end, :) == 0.5)), 'ko', ... % TODO why only the last one?
-    'MarkerSize', 10, 'MarkerFaceColor', 'g');
-  plot([0 1], [0 1], 'k:'); 
-  legend(['AUC= ', num2str(-trapz(result.averageRun.validationPerf(end).fpr, ...
-    result.averageRun.validationPerf(end).tpr))], ...
-    'NPC performance', 'Location', 'SouthEast'); % FIX RJV: Legend needs to come after last plot.
-  xlabel('false positive rate');
-  ylabel('true positive rate'); 
-  axis square; 
-  title('threshold-avg. test set ROC (class 1 vs. all others)', 'FontWeight', 'bold'); 
-  hold off;
-  return
-end
-
 % plot
-plot(result);
 
-% [e_vec, e_val] = eig(lambda);   
+subplot(2, 2, 1); 
+plot(result.averageRun.validationPerf(end).fpr', result.averageRun.validationPerf(end).tpr', ...
+  'LineWidth', 2); box off;
+hold on;
+% plot(mean(result.finalFprs(:, result.finalThresholds(end, :) == 0.5)), ...
+%   mean(result.finalTprs(:, result.finalThresholds(end, :) == 0.5)), 'ko', ... 
+%   'MarkerSize', 10, 'MarkerFaceColor', 'g');
+plot([0 1], [0 1], 'k:'); 
+title(sprintf('AUC = %1.2f', -trapz(result.averageRun.validationPerf(end).fpr, ...
+  result.averageRun.validationPerf(end).tpr)), 'FontWeight', 'normal');
+xlabel('false positive rate');
+ylabel('true positive rate'); 
+axis square; 
+
+% separation
+subplot(2, 2, 2);
+l = result.averageRun.lambda; % p = result.averageRun.prototypes;
+[lV, lD] = eig(l);
+w = lV(:, end); % leading eigenvector of lambda
+x = w' * X;
+yMin = min(x);
+yMax = max(x);
+nSubjects = size(X, 2);
+fill([1, 1, N1, N1], [yMin, yMax, yMax, yMin], [1.0, 0.9, 0.9], 'LineStyle', 'none'); hold on;
+line([1, nSubjects], [0, 0], 'Color', [0.7, 0.7, 0.7], 'LineWidth', 2); hold on;
+plot(x, 'o-'); hold on; 
+box off; xlim([1, size(X, 2)]); ylim([yMin, yMax]);
+xlabel('patients / controls'); ylabel('w^T * X');
+accuracy = mean((x(:) < 0) == y_TR(:));
+title(sprintf('accuracy = %1.2f', accuracy), 'FontWeight', 'normal');
+
+% projections
+subplot(2, 2, 4);
+l = result.averageRun.lambda;
+[lV, lD] = eig(l);
+w = lV(:, end); % leading eigenvector of lambda
+x = abs(V * S(1:K, 1:K) * w); % abs(V * w)
+[~, ix] = sort(x);
+x = x(ix);
+plot(x, '.'); hold on; box off; xlim([0, length(V)]);
+xlabel('metabolites'); ylabel('V * w');
+
+
+% plot | GMLVQ default
+% plot(result);
 
 end % end
 
