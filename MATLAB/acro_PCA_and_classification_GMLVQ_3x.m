@@ -126,6 +126,7 @@ l = result.averageRun.lambda; % p = result.averageRun.prototypes;
 [lV, lD] = eig(l);
 w = lV(:, end); % leading eigenvector of lambda
 x = w' * X;
+xWeights = x;
 yMin = min(x);
 yMax = max(x);
 nSubjects = size(X, 2);
@@ -151,6 +152,29 @@ xlabel('metabolites'); ylabel('V * w');
 
 % plot | GMLVQ default
 % plot(result);
+
+% save metabolites
+bSaveMetabolites = 0;
+if bSaveMetabolites == 1
+  tCodes = names(ix);
+  tCodes = tCodes(end:-1:1);
+  xProjections = x;
+  xProjections = xProjections(end:-1:1);
+  aFilename = sprintf('d:\\data\\acromegaly\\_analysis\\PCA_GMLVQ\\metabolites\\%s_names.txt', aFile);
+  hFile = fopen(aFilename, 'wt');
+  for i = 1:length(tCodes)
+    fprintf(hFile, '%1.4f\t%s\n', xProjections(i), tCodes{i});
+  end
+  fclose(hFile);
+end
+
+% save weights
+bSaveWeights = 0;
+if bSaveWeights == 1
+  labels = Y_labels;
+  aFilename = sprintf('d:\\data\\acromegaly\\_analysis\\PCA_GMLVQ\\weights\\%s_weights.mat', aFile);
+  save(aFilename, 'xWeights', 'subjects', 'labels');
+end
 
 end % end
 
